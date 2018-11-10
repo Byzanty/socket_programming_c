@@ -41,8 +41,6 @@ int main (int argc, char *argv[])
 {
 
   char *address = argv[argc-1];
-  
-
   int sockfd;
   struct addrinfo hints, *ai;
   memset(&hints, 0, sizeof(hints));
@@ -82,9 +80,10 @@ int main (int argc, char *argv[])
 	char* host;
   	char* format;
   	char* rest;
-    if((format = strtok(address, "/"))!=NULL);
+    int indicator = 0;
+    if((format = strtok(strdup(address), "/"))!=NULL);
     if((host = strtok(NULL, "/"))!=NULL);
-    if((rest = strtok(NULL," ")) == NULL){rest = "";}; //damit die request nicht anfängt zu spinnen
+    if((rest = strtok(NULL," ")) == NULL){rest = ""; indicator=1;}; //damit die request nicht anfängt zu spinnen
     printf("this is the format: %s\n",format);
     printf("this is the host: %s\n",host);
     printf("this is the rest of the URL: %s\n\n",rest);
@@ -125,63 +124,115 @@ int main (int argc, char *argv[])
 	close(socket);*/
 //-------------------------------------------------------------------------------------------------
 
+//-----------------------------------------URL Usage Error Handling--------------------------------
+  if(indicator==1&&address[(strlen (address) -1)]!='/'){
+    printf("Usage Error: Host didnt't end with '/'\n");
+    exit (EXIT_FAILURE);
+
+  }
+
+//-------------------------------------------------------------------------------------------------  
+
 //---------------------------------------Option Handling-------------------------------------------
 	if(filepath_d!=NULL){
+    printf("I'M IN OPTION D");
   		char outname[2048];
   		printf("Hi I was here\n");
- 	 	if (filepath_d[((int)strlen (filepath_d)) - 1] == '/') //integer casten damit ich berechnungen drauf machen kann
-    		{
-    			int size = (strlen(filepath_d)-1);
-    			printf("%i\n",size );
-    			printf("Hi I was here 2\n");
-      			sprintf (outname, "%s%s", filepath_d, "index.html");
-    		}
-  		else if(filepath_d[((int)strlen (filepath_d)) -1] == NULL)
-    		{
-    			printf("Hi I was here 3\n");
-    			sprintf (outname, "%s%s", filepath_d, "index.html");
-     	//	 	strcpy(filepath_d, outname); string concatinate  and str copy important functiona
-    		}
-    	else{	
-    			printf("yes that's the file!\n");
-    			int rest_size = strlen(rest);
-    			reverse_array(rest,rest_size);
-    			if((format = strtok(rest, "/"))!=NULL);
-    			int rest_size_update = strlen(rest);
-    			reverse_array(rest,rest_size_update);
-    			sprintf(outname,"%s%s",filepath_d,rest);
-    		}
+      printf("Das ist die URL: %s\n",address);
+      printf("letzter wert der adresse: %i\n",address[(strlen (address) -1)]);
+ 	 	if (address[((int)strlen (address)) - 1] == '/'){ //integer casten damit ich berechnungen drauf machen kann
+          if(filepath_d[0] == '.'){
+    			  int size = (strlen(address)-1);
+            printf("%i\n",size );
+    				sprintf (outname, "%s","index.html");
+            printf("Das ist der outname %s\n",outname);
+          }else{
+            int size = (strlen(address)-1);
+            printf("%i\n",size );
+            sprintf (outname, "%s%s",filepath_d,"index.html");
+            printf("Das ist der outname %s\n",outname);
+          }
+    		}else{
 
+          if(filepath_d[0] == '.'){
+            printf("yes that's the file!\n"); // Ich benutze hier rest weil ich am ende keine voll addresse brauche sondern nur den teil nach dem host 
+            int rest_size = strlen(rest); // wenn der erste case nicht zutrifft muss es ein rest teil geben weil jeder host ohne weitere adresse ein index.html sein soll
+            reverse_array(rest,rest_size);
+            if((format = strtok(rest, "/"))!=NULL);
+            int rest_size_update = strlen(rest);
+            reverse_array(rest,rest_size_update);
+            sprintf(outname,"%s",rest);
+            printf("I reached the end of the else branch, and this here is the outname:%s\n",outname);
+          }else{
+    			  printf("yes that's the file!\n"); // Ich benutze hier rest weil ich am ende keine voll addresse brauche sondern nur den teil nach dem host 
+            int rest_size = strlen(rest); // wenn der erste case nicht zutrifft muss es ein rest teil geben weil jeder host ohne weitere adresse ein index.html sein soll
+            reverse_array(rest,rest_size);
+            if((format = strtok(rest, "/"))!=NULL);
+            int rest_size_update = strlen(rest);
+            reverse_array(rest,rest_size_update);
+            sprintf(outname,"%s%s",filepath_d,rest);
+            printf("I reached the end of the else branch, and this here is the outname:%s\n",outname);
+          }
+    		}
+    	
     	FILE *flptr_1 = fopen(outname,"w+");
     	if(flptr_1==NULL){
     		exit(EXIT_FAILURE);
     	}
-
     	char buf[1024];
-    	rewind(sockfile);
-		while (fgets(buf, sizeof(buf), sockfile) != NULL){
-			fputs(buf, flptr_1);
-		}
+      printf("geht hier weiter\n");
+    	//rewind(sockfile);
+		  while (fgets(buf, sizeof(buf), sockfile) != NULL){ //skip the header lines
+        if(strcmp(buf,"\r\n")==0){
+          break;
+        }
+      }
+
+      while(!feof(sockfile)){ //now read and write the files in my file
+        fread(buf,sizeof(char),1,sockfile);
+        fwrite(buf, sizeof(char), 1,flptr_1);
+      }
 		fclose(sockfile);
 		
 	}else if(filepath_o!=NULL){
+    char buf[2024];
 
-		char outname[2048];
-		strcat(outname,filepath_o);
-		FILE *flptr_1 = fopen(outname,"a+");
-    	if(flptr_1==NULL){
-    		exit(EXIT_FAILURE);
-    	}
-
-    	char buf[1024];
-    	rewind(sockfile);
+    char outname[2048];
+    strcat(outname,filepath_o);
+    printf("I'M IN OPTION O");
+    FILE *flptr_1 = fopen(outname,"a+");
+      if(flptr_1==NULL){
+        exit(EXIT_FAILURE);
+      }
+    //rewind(sockfile);
 		while (fgets(buf, sizeof(buf), sockfile) != NULL){
 			fputs(buf, flptr_1);
-		}
-		fclose(sockfile);
-		
-	}
-//---------------------------------------Option Handling-------------------------------------------
+    }
+    fclose(sockfile);
 
-  	return 0;
-} 
+  }else{ //----------------------------Default case---------------------------------------------- 
+      char buf[2024]; 
+      
+      FILE *flptr_1 = fopen("/homes/y00926193/Desktop/Das/cat.png","w+");
+      if(flptr_1 == NULL){
+        exit(EXIT_FAILURE);
+      } 
+      while (fgets(buf, sizeof(buf), sockfile) != NULL){ //skip the header lines
+        if(strcmp(buf,"\r\n")==0){
+          break;
+        }
+      }
+
+      while(!feof(sockfile)){ //now read and write the files in my file
+        fread(buf,sizeof(char),1,sockfile);
+        fwrite(buf, sizeof(char), 1,flptr_1);
+      }
+
+    fclose(sockfile);
+    }
+    printf("END REACHED OF DEFAULT CASE!\n");
+    //fclose(flptr_1);
+//---------------------------------------Option Handling Done----------------------------------------
+    return 0;
+}
+
