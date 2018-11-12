@@ -1,0 +1,372 @@
+/**
+*@file mydiff.c
+*@author Büyükakyüz Ahmet 00926193
+*@brief mydiff reads into two files and compares them
+*@details if two lines differ, then the line number and the number of differing characters is printed 
+*@date 11th November 2018
+* @{
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <assert.h>
+
+/**
+*@brief compare 2 characters
+*@details compare 2 characters return 1 if they differ 0 if they are the same
+*@param first parameter: pointer to char 'a' second parameter: pointer to char b
+*@returns an integer value 0 or 1
+*/
+int charcmp(const char *a,const char *b)
+{
+  if(tolower(*a) == tolower(*b)){
+     return 0;
+  }
+  else{
+     return 1;
+  }
+}
+int main(int argc, char *argv[])
+{	
+  
+ if(((strcmp(argv[1],"-i")) == 0) && ((strcmp(argv[2],"-o")) == 0)){
+
+	FILE *stream2 = fopen(argv[3],"w");
+	if(stream2==NULL)
+	{
+		fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,argv[3]);
+		exit(EXIT_FAILURE);
+	}
+	FILE *stream3 = fopen(argv[4],"r");
+	FILE *stream4 = fopen(argv[5],"r");
+	if(stream4==NULL)
+	{
+		fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,argv[5]);
+		exit(EXIT_FAILURE);
+	}
+	if(stream3==NULL)
+	{
+		fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+												__FILE__,__LINE__,argv[4]);
+		exit(EXIT_FAILURE);
+	}
+
+	char ch1;
+	char ch2;
+
+	ch1 = fgetc(stream3);
+	ch2 = fgetc(stream4);
+
+	int countError = 0;
+	int countLine = 1;
+	int flag_change = 0;
+  //@param flag_change indicates that differences between character lines have been found
+  //while loop looks for new line characters and character differences as long as feof doesn't return NULL
+  while(!feof(stream3)&&!feof(stream4)){		
+		if(ch2=='\n'&&ch1=='\n'){
+			if(flag_change>0){
+				fprintf(stream2,"Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;
+		}else if(ch1=='\n'&&ch2!='\n'){
+			while(ch2!='\n'){
+				ch2=fgetc(stream4);
+			}
+			if(flag_change>0){
+				fprintf(stream2,"Line:%i characters: %i \n",countLine,countError);
+			}
+			countLine++;
+			countError=0;
+		}else if(ch2=='\n'&&ch1!='\n'){
+			while(ch1!='\n'){
+				ch1=fgetc(stream3);
+			}
+			if(flag_change>0){
+				fprintf(stream2,"Line:%i characters: %i \n",countLine,countError);
+			}
+			countLine++;
+			countError=0;
+		}		
+		if(charcmp(&ch1,&ch2)==1){
+				flag_change++;
+				countError++;
+		}
+		ch1=fgetc(stream3);
+		ch2=fgetc(stream4);
+ 	}
+
+		if(fclose(stream3)!=0){
+			fprintf(stderr, "%i error occured while attemptinng to close stream\n",__LINE__);
+		}
+		if(fclose(stream4)!=0){
+			fprintf(stderr, "%i error occured while attemptinng to close stream\n",__LINE__);
+		}
+
+ 	}else if(((strcmp(argv[1],"-o")) == 0) && ((strcmp(argv[3],"-i")) == 0)){
+		FILE *stream2 = fopen(argv[2],"w");
+		if(stream2==NULL)
+		{
+			fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+													__FILE__,__LINE__,argv[2]);
+			exit(EXIT_FAILURE);
+		}
+		FILE *stream3 = fopen(argv[4],"r");
+		if(stream3==NULL)
+		{
+			fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,argv[4]);
+			exit(EXIT_FAILURE);
+		}
+		FILE *stream4 = fopen(argv[5],"r");
+		if(stream4==NULL)
+		{
+			fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,argv[5]);
+			exit(EXIT_FAILURE);
+		}
+
+	char ch1;
+	char ch2;
+
+	ch1 = fgetc(stream3);
+	ch2 = fgetc(stream4);
+
+	int countError = 0;
+	int countLine = 1;
+	int flag_change=0;
+  //@param flag_change indicates that differences between character lines have been found
+  //while loop looks for new line characters and character differences as long as feof doesn't return NULL
+  while(!feof(stream3)&&!feof(stream4)){		
+		if(ch2=='\n'&&ch1=='\n'){
+			if(flag_change>0){
+				fprintf(stream2,"Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;
+		}else if(ch1=='\n'&&ch2!='\n'){
+			while(ch2!='\n'){
+				ch2=fgetc(stream4);
+			}
+			if(flag_change>0){
+				fprintf(stream2,"Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;
+		}else if(ch2=='\n'&&ch1!='\n'){
+			while(ch1!='\n'){
+				ch1=fgetc(stream3);
+			}
+			if(flag_change>0){
+				fprintf(stream2,"Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;
+			}		
+			if(charcmp(&ch1,&ch2)==1){
+				flag_change++;
+				countError++;
+			}
+			ch1=fgetc(stream3);
+			ch2=fgetc(stream4);
+		}
+		if(fclose(stream3)!=0){
+			fprintf(stderr, "%s\n","didn't close stream properly");
+			exit(EXIT_FAILURE);
+		}
+		
+		if(fclose(stream4)!=0){
+			fprintf(stderr, "%s\n", "didn't close stream properly");
+			exit(EXIT_FAILURE);
+		}
+  }else{
+  int opt;
+  FILE *stream1=fopen(argv[argc-1],"r");
+  FILE *stream2=fopen(argv[argc-2],"r");
+  FILE *stream3=NULL;
+  if(stream2==NULL)
+	{
+		fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,argv[argc-2]);
+		exit(EXIT_FAILURE);
+	}
+  if(stream1==NULL)
+	{
+		fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+												__FILE__,__LINE__,argv[argc-1]);
+		exit(EXIT_FAILURE);
+	}
+  char ch1=fgetc(stream1);
+  char ch2=fgetc(stream2);
+  int countError = 0;
+  int countLine = 1;
+  int flagi = 0;
+  int flago = 0;
+  	// getopt returns -1 no more characters
+  	//'?' unknown or missing option
+   while ((opt = getopt (argc, argv, "io:")) != -1)
+    {
+      switch (opt)
+		{
+		case 'i':
+			flagi=1;
+	  		stream1 = fopen(argv[optind],"r");
+	  		stream2 = fopen(argv[optind+1],"r");
+	  		if(stream1==NULL)
+			{
+				fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,argv[optind]);
+				exit(EXIT_FAILURE);
+			}
+	  		if(stream2==NULL)
+			{
+				fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,argv[optind+1]);
+				exit(EXIT_FAILURE);
+			}
+	  		ch1 = fgetc(stream1);
+	  		ch2 = fgetc(stream2);
+	  		break;
+		case 'o':
+			flago=1;
+	  		stream1 = fopen(argv[optind],"r");
+	  		stream2 = fopen(argv[optind+1],"r");
+	  		stream3 = fopen(optarg,"w");
+	  		if(stream1==NULL)
+			{
+				fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,argv[optind]);
+				exit(EXIT_FAILURE);
+			}
+	  		if(stream2==NULL)
+			{
+				fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,argv[optind+1]);
+				exit(EXIT_FAILURE);
+			}
+			if(stream3==NULL)
+			{
+				fprintf(stderr, "[%s,%s,%d] fopen failed %s \n\n",argv[0],
+										__FILE__,__LINE__,optarg);
+				exit(EXIT_FAILURE);
+			}
+	  		ch1 = fgetc(stream1);
+	  		ch2 = fgetc(stream2);
+	  		break;
+	  	case '?':
+	  		fprintf (stderr, "Usage: %s [-i] [-o outfile] file1 file2 \n",
+		   			argv[0]);
+	  		exit (EXIT_FAILURE);
+	  		break;	  		
+		default:
+			assert(0&&"NON REACHABLE STATEMENT IF OPTARG IS VALID");
+		}
+    }
+  if (optind >= argc){
+      fprintf (stderr, "Expected argument after options\n");
+      exit (EXIT_FAILURE);
+  }
+  if(argc>4){
+  		fprintf (stderr, "Expected argument after options\n");
+      	exit (EXIT_FAILURE);	
+  }
+
+  //@param flag_change indicates that differences have been found
+  //while loop looks for new line characters and character differences as long as feof doesn't return NULL
+  int flag_change = 0; 
+  while(!feof(stream1)&&!feof(stream2)){
+  //end of line cases	
+		if(ch2=='\n'&&ch1=='\n'){
+
+		if(flago==1){
+			if(flag_change>0){
+				fprintf(stream3,"Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;				
+		}else{
+			if(flag_change>0){
+				printf("Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;
+		}
+		}else if(ch1=='\n'&&ch2!='\n'){
+
+		if(flago==1){
+			while(ch2!='\n'){
+				ch2=fgetc(stream2);
+			}
+			if(flag_change>0){
+				fprintf(stream3,"Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;
+		}else{
+			while(ch2!='\n'){
+				ch2=fgetc(stream2);
+			}
+			if(flag_change>0){
+				printf("Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;
+		}
+		}else if(ch2=='\n'&&ch1!='\n'){
+
+			if(flago==1){
+			while(ch1!='\n'){
+				ch1=fgetc(stream1);
+			}
+			if(flag_change>0){				
+				fprintf(stream3,"Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;
+			}else{
+			while(ch1!='\n'){
+				ch1=fgetc(stream1);
+			}
+			if(flag_change>0){			
+				printf("Line:%i characters: %i \n",countLine,countError);
+			}
+			countError=0;
+			countLine++;
+			}
+		}
+	//compares characters and looks for differences
+		if(flagi==1){
+			if(charcmp(&ch1,&ch2)==1){ 
+				flag_change++;
+				countError++;					
+		}
+		}else{
+			if(ch1!=ch2){
+				flag_change++;	
+				countError++;
+			}	
+		}
+
+		ch1=fgetc(stream1);
+		ch2=fgetc(stream2);
+		}
+		if(fclose(stream1)!=0){
+			fprintf(stderr, "issue with closing file\n");
+		}
+
+		if(fclose(stream2)!=0){
+			fprintf(stderr, "%s","issue with closing file\n");
+		}
+
+		if(flago==1){
+			if(fclose(stream3)!=0){
+				fprintf(stderr, "%s","issue with closing file\n");
+			}
+		}
+	}
+
+}
